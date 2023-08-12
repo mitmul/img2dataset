@@ -53,12 +53,12 @@ class Reader:
         self.fs = fs
         self.tmp_path = tmp_path
 
-        if fs.isdir(url_path):
+        if fs.isfile(url_path):
+            self.input_files = [url_path]
+        else:
             self.input_files = sorted(fs.glob(url_path + "/*." + input_format))
             if len(self.input_files) == 0:
                 raise Exception(f"No file found at path {url_path} with extension {input_format}")
-        else:
-            self.input_files = [url_path]
 
         if self.input_format in ["txt", "txt.gz"]:
             self.column_list = ["url"]
