@@ -354,4 +354,4 @@ class Downloader:
             status_dict,
             self.oom_shard_count,
         )
-        fs.rm(shard_path)
+        # fs.rm(shard_path)
