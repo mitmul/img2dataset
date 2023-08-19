@@ -111,13 +111,14 @@ class WebDatasetSampleWriter:
             shard_id=shard_id, oom_shard_count=oom_shard_count
         )
         self.shard_id = shard_id
-        fs, self.upload_path = fsspec.core.url_to_fs(output_folder)
-        self.output_path = "/tmp/"
-        self.tmp_tar_path = f"{self.output_path}/{self.shard_name}.tar"
+        self.upload_path = output_folder
+        tmp_dir = "/tmp"
+        fs, _ = fsspec.core.url_to_fs(tmp_dir)
+        self.tmp_tar_path = f"{tmp_dir}/{self.shard_name}.tar"
         self.tar_fd = fs.open(self.tmp_tar_path, "wb")
         self.tarwriter = wds.TarWriter(self.tar_fd)
         self.save_caption = save_caption
-        self.tmp_parquet_path = f"{self.output_path}/{self.shard_name}.parquet"
+        self.tmp_parquet_path = f"{tmp_dir}/{self.shard_name}.parquet"
         self.buffered_parquet_writer = BufferedParquetWriter(self.tmp_parquet_path, schema, 100)
         self.encode_format = encode_format
         self.endpoint_url = endpoint_url
