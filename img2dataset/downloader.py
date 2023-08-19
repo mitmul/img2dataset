@@ -98,6 +98,7 @@ class Downloader:
         user_agent_token,
         disallowed_header_directives,
         blurring_bbox_col=None,
+        endpoint_url=None,
     ) -> None:
         self.sample_writer_class = sample_writer_class
         self.resizer = resizer
@@ -199,6 +200,7 @@ class Downloader:
             self.oom_shard_count,
             schema,
             self.encode_format,
+            endpoint_url=endpoint_url,
         )
         oom_sample_per_shard = math.ceil(math.log10(self.number_sample_per_shard))
         with ThreadPool(self.thread_count) as thread_pool:
