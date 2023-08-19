@@ -5,6 +5,7 @@ import os
 
 import fsspec
 import numpy as np
+import pfio
 import pyarrow as pa
 import pyarrow.parquet as pq
 import webdataset as wds
@@ -103,18 +104,23 @@ class WebDatasetSampleWriter:
         oom_shard_count,
         schema,
         encode_format,
+        endpoint_url=None,
     ):
         self.oom_shard_count = oom_shard_count
-        shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
+        self.shard_name = "{shard_id:0{oom_shard_count}d}".format(  # pylint: disable=consider-using-f-string
             shard_id=shard_id, oom_shard_count=oom_shard_count
         )
         self.shard_id = shard_id
-        fs, output_path = fsspec.core.url_to_fs(output_folder)
-        self.tar_fd = fs.open(f"{output_path}/{shard_name}.tar", "wb")
+        fs, self.upload_path = fsspec.core.url_to_fs(output_folder)
+        self.output_path = "/tmp/"
+        self.tmp_tar_path = f"{self.output_path}/{self.shard_name}.tar"
+        self.tar_fd = fs.open(self.tmp_tar_path, "wb")
         self.tarwriter = wds.TarWriter(self.tar_fd)
         self.save_caption = save_caption
-        self.buffered_parquet_writer = BufferedParquetWriter(output_folder + "/" + shard_name + ".parquet", schema, 100)
+        self.tmp_parquet_path = f"{self.output_path}/{self.shard_name}.parquet"
+        self.buffered_parquet_writer = BufferedParquetWriter(self.tmp_parquet_path, schema, 100)
         self.encode_format = encode_format
+        self.endpoint_url = endpoint_url
 
     def write(self, img_str, key, caption, meta):
         """write sample to tars"""
@@ -131,6 +137,19 @@ class WebDatasetSampleWriter:
         self.buffered_parquet_writer.write(meta)
 
     def close(self):
+        upload_path = "s3://" + self.upload_path
+        with pfio.v2.from_url(upload_path) as fs:
+            tar_upload_path = self.shard_name + ".tar"
+            print(f"Uplaoding {self.tmp_tar_path} to {tar_upload_path}...")
+            with fs.open(tar_upload_path, "wb"):
+                with open(self.tmp_tar_path) as f:
+                    fs.write(f.read())
+            parquet_upload_path = self.shard_name + ".parquet"
+            print(f"Uploading {self.tmp_parquet_path} to {parquet_upload_path}...")
+            with fs.open(parquet_upload_path, "wb"):
+                with open(self.tmp_parquet_path) as f:
+                    fs.write(f.read())
+
         self.buffered_parquet_writer.close()
         self.tarwriter.close()
         self.tar_fd.close()
@@ -151,15 +170,10 @@ class TFRecordSampleWriter:
         try:
             os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
             import tensorflow_io as _  # pylint: disable=import-outside-toplevel
-            from tensorflow.python.lib.io.tf_record import TFRecordWriter  # pylint: disable=import-outside-toplevel
+            from tensorflow.python.lib.io.tf_record import \
+                TFRecordWriter  # pylint: disable=import-outside-toplevel
             from tensorflow.python.training.training import (  # pylint: disable=import-outside-toplevel
-                BytesList,
-                Example,
-                Feature,
-                Features,
-                FloatList,
-                Int64List,
-            )
+                BytesList, Example, Feature, Features, FloatList, Int64List)
 
             self._BytesList = BytesList  # pylint: disable=invalid-name
             self._Int64List = Int64List  # pylint: disable=invalid-name
