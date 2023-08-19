@@ -329,6 +329,7 @@ class Downloader:
                     img_stream.close()
                     del img_stream
 
+                    print(str_key)
                     sample_writer.write(
                         img,
                         str_key,
