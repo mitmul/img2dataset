@@ -121,6 +121,7 @@ class Downloader:
             else {directive.strip().lower() for directive in disallowed_header_directives}
         )
         self.blurring_bbox_col = blurring_bbox_col
+        self.endpoint_url = endpoint_url
 
     def __call__(
         self,
@@ -200,7 +201,7 @@ class Downloader:
             self.oom_shard_count,
             schema,
             self.encode_format,
-            endpoint_url=endpoint_url,
+            endpoint_url=self.endpoint_url,
         )
         oom_sample_per_shard = math.ceil(math.log10(self.number_sample_per_shard))
         with ThreadPool(self.thread_count) as thread_pool:
