@@ -126,7 +126,6 @@ class WebDatasetSampleWriter:
         self.endpoint_url = endpoint_url
 
     def write(self, img_str, key, caption, meta):
-        upload_path = "s3://" + self.upload_path
         """write sample to tars"""
         if img_str is not None:
             sample = {"__key__": key, self.encode_format: img_str}
@@ -138,18 +137,19 @@ class WebDatasetSampleWriter:
                     meta[k] = v.tolist()
             sample["json"] = json.dumps(meta, indent=4)
             self.tarwriter.write(sample)
-            with pfio.v2.from_url(upload_path) as fs:
+            with pfio.v2.from_url(self.upload_path) as fs:
                 tar_upload_path = self.shard_name + ".tar"
                 print(f"Uplaoding {self.tmp_tar_path} to {tar_upload_path}...")
                 with fs.open(tar_upload_path, "wb"):
                     with open(self.tmp_tar_path) as f:
                         fs.write(f.read())
         self.buffered_parquet_writer.write(meta)
-        parquet_upload_path = self.shard_name + ".parquet"
-        print(f"Uploading {self.tmp_parquet_path} to {parquet_upload_path}...")
-        with fs.open(parquet_upload_path, "wb"):
-            with open(self.tmp_parquet_path) as f:
-                fs.write(f.read())
+        with pfio.v2.from_url(self.upload_path) as fs:
+            parquet_upload_path = self.shard_name + ".parquet"
+            print(f"Uploading {self.tmp_parquet_path} to {parquet_upload_path}...")
+            with fs.open(parquet_upload_path, "wb"):
+                with open(self.tmp_parquet_path) as f:
+                    fs.write(f.read())
 
     def close(self):
         self.buffered_parquet_writer.close()
