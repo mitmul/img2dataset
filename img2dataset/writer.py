@@ -137,6 +137,7 @@ class WebDatasetSampleWriter:
                     meta[k] = v.tolist()
             sample["json"] = json.dumps(meta, indent=4)
             self.tarwriter.write(sample)
+            self.tar_fd.flush()
             with pfio.v2.from_url(self.upload_path) as fs:
                 tar_upload_path = self.shard_name + ".tar"
                 print(f"Uplaoding {self.tmp_tar_path} to {tar_upload_path}...")
