@@ -144,6 +144,7 @@ class Downloader:
         shard_id, shard_file = row
         start_time = time.time()
 
+        print(f"Downloading shard {shard_id}, {shard_file}...")
         fs, shard_path = fsspec.core.url_to_fs(shard_file)
         with fs.open(shard_path, "rb") as f:
             df = pa.ipc.open_file(f).read_all()

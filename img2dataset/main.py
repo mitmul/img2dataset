@@ -186,6 +186,7 @@ def download(
         number_sample_per_shard,
         done_shards,
         tmp_path,
+        endpoint_url,
     )
 
     if output_format == "webdataset":

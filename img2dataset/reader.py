@@ -1,14 +1,16 @@
 """Reader is module to read the url list and return shards"""
 
-from multiprocessing.pool import ThreadPool
 import math
-import fsspec
 import time
-import pyarrow.parquet as pq
+from multiprocessing.pool import ThreadPool
+
+import fsspec
+import pandas as pd
+import pfio
+import pyarrow as pa
 import pyarrow.csv as csv_pa
 import pyarrow.json as json_pa
-import pyarrow as pa
-import pandas as pd
+import pyarrow.parquet as pq
 
 
 class Reader:
@@ -39,6 +41,7 @@ class Reader:
         number_sample_per_shard,
         done_shards,
         tmp_path,
+        endpoint_url,
     ) -> None:
         self.input_format = input_format
         self.url_col = url_col
@@ -48,9 +51,9 @@ class Reader:
         self.save_additional_columns = save_additional_columns
         self.number_sample_per_shard = number_sample_per_shard
         self.done_shards = done_shards
+        self.endpoint_url = endpoint_url
 
-        fs, url_path = fsspec.core.url_to_fs(url_list)
-        self.fs = fs
+        self.url_list = url_list
         self.tmp_path = tmp_path
 
         if fs.isfile(url_path):
@@ -92,7 +95,7 @@ class Reader:
             compression = None
             if self.input_format.endswith(".gz"):
                 compression = "gzip"
-            with self.fs.open(input_file, encoding="utf-8", mode="rb", compression=compression) as file:
+            with pfio.v2.open_url(input_file, encoding="utf-8", mode="rb", compression=compression) as file:
                 if self.input_format in ["txt", "txt.gz"]:
                     df = csv_pa.read_csv(file, read_options=csv_pa.ReadOptions(column_names=["url"]))
                 elif self.input_format in ["json", "json.gz"]:
@@ -106,7 +109,7 @@ class Reader:
                 else:
                     raise ValueError(f"Unknown input format {self.input_format}")
         elif self.input_format == "parquet":
-            with self.fs.open(input_file, mode="rb") as file:
+            with pfio.v2.open_url(self.url_list, "rb", endpoint_url=self.endpoint_url) as file:
                 columns_to_read = [self.url_col]
                 if self.caption_col is not None:
                     columns_to_read += [self.caption_col]
