@@ -1,6 +1,7 @@
 """Reader is module to read the url list and return shards"""
 
 import math
+import os
 import time
 from multiprocessing.pool import ThreadPool
 
@@ -56,14 +57,30 @@ class Reader:
         self.url_list = url_list
         self.tmp_path = tmp_path
 
-        with pfio.v2.from_url(url_list, endpoint_url=endpoint_url) as fs:
-            if not fs.isdir(""):
+        if endpoint_url is not None:
+            with pfio.v2.from_url(url_list, endpoint_url=endpoint_url) as fs:
+                if not fs.isdir(""):
+                    self.input_files = [url_list]
+                else:
+                    self.input_files = sorted(
+                        [
+                            fn
+                            for fn in fs.list(url_list, recursive=True)
+                            if fn.endswith(input_format)
+                        ]
+                    )
+                    if len(self.input_files) == 0:
+                        raise Exception(
+                            f"No file found at path {url_list} with extension {input_format}"
+                        )
+        else:
+            if not os.path.isdir(url_list):
                 self.input_files = [url_list]
             else:
                 self.input_files = sorted(
                     [
-                        fn
-                        for fn in fs.list(url_list, recursive=True)
+                        os.path.join(url_list, fn)
+                        for fn in os.listdir(url_list)
                         if fn.endswith(input_format)
                     ]
                 )

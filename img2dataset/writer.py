@@ -178,17 +178,10 @@ class TFRecordSampleWriter:
         try:
             os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
             import tensorflow_io as _  # pylint: disable=import-outside-toplevel
-            from tensorflow.python.lib.io.tf_record import (
-                TFRecordWriter,
-            )  # pylint: disable=import-outside-toplevel
+            from tensorflow.python.lib.io.tf_record import \
+                TFRecordWriter  # pylint: disable=import-outside-toplevel
             from tensorflow.python.training.training import (  # pylint: disable=import-outside-toplevel
-                BytesList,
-                Example,
-                Feature,
-                Features,
-                FloatList,
-                Int64List,
-            )
+                BytesList, Example, Feature, Features, FloatList, Int64List)
 
             self._BytesList = BytesList  # pylint: disable=invalid-name
             self._Int64List = Int64List  # pylint: disable=invalid-name

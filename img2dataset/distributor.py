@@ -75,7 +75,8 @@ def _spark_session(processes_count: int):
     """Create and close a spark session if none exist"""
 
     import pyspark  # pylint: disable=import-outside-toplevel
-    from pyspark.sql import SparkSession  # pylint: disable=import-outside-toplevel
+    from pyspark.sql import \
+        SparkSession  # pylint: disable=import-outside-toplevel
 
     spark_major_version = int(pyspark.version.__version__[0])
     if spark_major_version >= 3:

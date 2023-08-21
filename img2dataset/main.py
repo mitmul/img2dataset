@@ -15,13 +15,8 @@ from .downloader import Downloader
 from .logger import LoggerProcess
 from .reader import Reader
 from .resizer import Resizer
-from .writer import (
-    DummySampleWriter,
-    FilesSampleWriter,
-    ParquetSampleWriter,
-    TFRecordSampleWriter,
-    WebDatasetSampleWriter,
-)
+from .writer import (DummySampleWriter, FilesSampleWriter, ParquetSampleWriter,
+                     TFRecordSampleWriter, WebDatasetSampleWriter)
 
 logging.getLogger("exifread").setLevel(level=logging.CRITICAL)
 
