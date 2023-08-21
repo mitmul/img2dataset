@@ -144,6 +144,7 @@ class WebDatasetSampleWriter:
                     with open(self.tmp_tar_path, "rb") as in_f:
                         out_f.write(in_f.read())
         self.buffered_parquet_writer.write(meta)
+        self.buffered_parquet_writer.flush()
         with pfio.v2.from_url(self.upload_path) as fs:
             parquet_upload_path = self.shard_name + ".parquet"
             print(f"Uploading {self.tmp_parquet_path} to {parquet_upload_path}...")
