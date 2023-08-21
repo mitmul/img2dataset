@@ -1,25 +1,27 @@
 """Img2dataset"""
 
-from typing import List, Optional
-import fire
 import logging
-from .logger import LoggerProcess
-from .resizer import Resizer
+import os
+import signal
+import sys
+from typing import List, Optional
+
+import fire
+import fsspec
+
 from .blurrer import BoundingBoxBlurrer
+from .distributor import multiprocessing_distributor, pyspark_distributor
+from .downloader import Downloader
+from .logger import LoggerProcess
+from .reader import Reader
+from .resizer import Resizer
 from .writer import (
-    WebDatasetSampleWriter,
+    DummySampleWriter,
     FilesSampleWriter,
     ParquetSampleWriter,
     TFRecordSampleWriter,
-    DummySampleWriter,
+    WebDatasetSampleWriter,
 )
-from .reader import Reader
-from .downloader import Downloader
-from .distributor import multiprocessing_distributor, pyspark_distributor
-import fsspec
-import sys
-import signal
-import os
 
 logging.getLogger("exifread").setLevel(level=logging.CRITICAL)
 
@@ -125,7 +127,9 @@ def download(
     output_folder = make_path_absolute(output_folder)
     url_list = make_path_absolute(url_list)
 
-    logger_process = LoggerProcess(output_folder, enable_wandb, wandb_project, config_parameters)
+    logger_process = LoggerProcess(
+        output_folder, enable_wandb, wandb_project, config_parameters
+    )
 
     if not tmp_path:
         tmp_path = output_folder + "/_tmp"
@@ -152,7 +156,10 @@ def download(
         done_shards = set()
     else:
         if incremental_mode == "incremental":
-            done_shards = set(int(x.split("/")[-1].split("_")[0]) for x in fs.glob(output_path + "/*.json"))
+            done_shards = set(
+                int(x.split("/")[-1].split("_")[0])
+                for x in fs.glob(output_path + "/*.json")
+            )
         elif incremental_mode == "overwrite":
             fs.rm(output_path, recursive=True)
             fs.mkdir(output_path)

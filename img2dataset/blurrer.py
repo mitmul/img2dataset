@@ -1,8 +1,7 @@
 """blurrer module to blur parts of the image"""
 
-import numpy as np
-
 import albumentations as A
+import numpy as np
 
 
 class BoundingBoxBlurrer:
@@ -49,7 +48,9 @@ class BoundingBoxBlurrer:
                 int(bbox[3] * height),
             ]
 
-            diagonal = max(adjusted_bbox[2] - adjusted_bbox[0], adjusted_bbox[3] - adjusted_bbox[1])
+            diagonal = max(
+                adjusted_bbox[2] - adjusted_bbox[0], adjusted_bbox[3] - adjusted_bbox[1]
+            )
             max_diagonal = max(max_diagonal, diagonal)
 
             # Adjusting bbox as in:
@@ -65,7 +66,11 @@ class BoundingBoxBlurrer:
             adjusted_bbox[2] = np.clip(adjusted_bbox[2], 0, width - 1)
             adjusted_bbox[3] = np.clip(adjusted_bbox[3], 0, height - 1)
 
-            mask[adjusted_bbox[1] : adjusted_bbox[3], adjusted_bbox[0] : adjusted_bbox[2], ...] = 1
+            mask[
+                adjusted_bbox[1] : adjusted_bbox[3],
+                adjusted_bbox[0] : adjusted_bbox[2],
+                ...,
+            ] = 1
 
         sigma = 0.1 * max_diagonal
         ksize = int(2 * np.ceil(4 * sigma)) + 1

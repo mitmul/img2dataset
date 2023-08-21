@@ -1,8 +1,8 @@
 """distributor defines the distribution strategies for img2dataset"""
 
 from contextlib import contextmanager
+from itertools import chain, islice
 from multiprocessing import get_context
-from itertools import islice, chain
 
 from tqdm import tqdm
 
@@ -21,7 +21,9 @@ def retrier(runf, failed_shards, max_shard_retry):
         )
 
 
-def multiprocessing_distributor(processes_count, downloader, reader, _, max_shard_retry):
+def multiprocessing_distributor(
+    processes_count, downloader, reader, _, max_shard_retry
+):
     """Distribute the work to the processes using multiprocessing"""
     ctx = get_context("spawn")
     with ctx.Pool(processes_count, maxtasksperchild=5) as process_pool:
@@ -42,7 +44,9 @@ def multiprocessing_distributor(processes_count, downloader, reader, _, max_shar
         del process_pool
 
 
-def pyspark_distributor(processes_count, downloader, reader, subjob_size, max_shard_retry):
+def pyspark_distributor(
+    processes_count, downloader, reader, subjob_size, max_shard_retry
+):
     """Distribute the work to the processes using pyspark"""
 
     with _spark_session(processes_count) as spark:
@@ -70,8 +74,8 @@ def pyspark_distributor(processes_count, downloader, reader, subjob_size, max_sh
 def _spark_session(processes_count: int):
     """Create and close a spark session if none exist"""
 
-    from pyspark.sql import SparkSession  # pylint: disable=import-outside-toplevel
     import pyspark  # pylint: disable=import-outside-toplevel
+    from pyspark.sql import SparkSession  # pylint: disable=import-outside-toplevel
 
     spark_major_version = int(pyspark.version.__version__[0])
     if spark_major_version >= 3:

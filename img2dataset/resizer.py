@@ -1,11 +1,12 @@
 """resizer module handle image resizing"""
 
+import imghdr
+import os
+from enum import Enum
+
 import albumentations as A
 import cv2
 import numpy as np
-from enum import Enum
-import imghdr
-import os
 
 _INTER_STR_TO_CV2 = dict(
     nearest=cv2.INTER_NEAREST,
@@ -106,7 +107,9 @@ class Resizer:
 
         self.image_size = image_size
         if isinstance(resize_mode, str):
-            if resize_mode not in ResizeMode.__members__:  # pylint: disable=unsupported-membership-test
+            if (
+                resize_mode not in ResizeMode.__members__
+            ):  # pylint: disable=unsupported-membership-test
                 raise Exception(f"Invalid option for resize_mode: {resize_mode}")
             resize_mode = ResizeMode[resize_mode]
         self.resize_mode = resize_mode
@@ -145,7 +148,11 @@ class Resizer:
             with SuppressStdoutStderr():
                 cv2.setNumThreads(1)
                 img_stream.seek(0)
-                encode_needed = imghdr.what(img_stream) != self.what_ext if self.skip_reencode else True
+                encode_needed = (
+                    imghdr.what(img_stream) != self.what_ext
+                    if self.skip_reencode
+                    else True
+                )
                 img_stream.seek(0)
                 img_buf = np.frombuffer(img_stream.read(), np.uint8)
                 img = cv2.imdecode(img_buf, cv2.IMREAD_UNCHANGED)
@@ -164,7 +171,11 @@ class Resizer:
                 if original_height * original_width > self.max_image_area:
                     return None, None, None, None, None, "image area too large"
                 # check if wrong aspect ratio
-                if max(original_height, original_width) / min(original_height, original_width) > self.max_aspect_ratio:
+                if (
+                    max(original_height, original_width)
+                    / min(original_height, original_width)
+                    > self.max_aspect_ratio
+                ):
                     return None, None, None, None, None, "aspect ratio too large"
 
                 # check if resizer was defined during init if needed
@@ -178,19 +189,34 @@ class Resizer:
                 if self.resize_mode in (ResizeMode.keep_ratio, ResizeMode.center_crop):
                     downscale = min(original_width, original_height) > self.image_size
                     if not self.resize_only_if_bigger or downscale:
-                        interpolation = self.downscale_interpolation if downscale else self.upscale_interpolation
-                        img = A.smallest_max_size(img, self.image_size, interpolation=interpolation)
+                        interpolation = (
+                            self.downscale_interpolation
+                            if downscale
+                            else self.upscale_interpolation
+                        )
+                        img = A.smallest_max_size(
+                            img, self.image_size, interpolation=interpolation
+                        )
                         if blurring_bbox_list is not None and self.blurrer is not None:
                             img = self.blurrer(img=img, bbox_list=blurring_bbox_list)
                         if self.resize_mode == ResizeMode.center_crop:
                             img = A.center_crop(img, self.image_size, self.image_size)
                         encode_needed = True
                         maybe_blur_still_needed = False
-                elif self.resize_mode in (ResizeMode.border, ResizeMode.keep_ratio_largest):
+                elif self.resize_mode in (
+                    ResizeMode.border,
+                    ResizeMode.keep_ratio_largest,
+                ):
                     downscale = max(original_width, original_height) > self.image_size
                     if not self.resize_only_if_bigger or downscale:
-                        interpolation = self.downscale_interpolation if downscale else self.upscale_interpolation
-                        img = A.longest_max_size(img, self.image_size, interpolation=interpolation)
+                        interpolation = (
+                            self.downscale_interpolation
+                            if downscale
+                            else self.upscale_interpolation
+                        )
+                        img = A.longest_max_size(
+                            img, self.image_size, interpolation=interpolation
+                        )
                         if blurring_bbox_list is not None and self.blurrer is not None:
                             img = self.blurrer(img=img, bbox_list=blurring_bbox_list)
                         if self.resize_mode == ResizeMode.border:
@@ -205,12 +231,18 @@ class Resizer:
                         maybe_blur_still_needed = False
 
                 # blur parts of the image if needed
-                if maybe_blur_still_needed and blurring_bbox_list is not None and self.blurrer is not None:
+                if (
+                    maybe_blur_still_needed
+                    and blurring_bbox_list is not None
+                    and self.blurrer is not None
+                ):
                     img = self.blurrer(img=img, bbox_list=blurring_bbox_list)
 
                 height, width = img.shape[:2]
                 if encode_needed:
-                    img_str = cv2.imencode(f".{self.encode_format}", img, params=self.encode_params)[1].tobytes()
+                    img_str = cv2.imencode(
+                        f".{self.encode_format}", img, params=self.encode_params
+                    )[1].tobytes()
                 else:
                     img_str = img_buf.tobytes()
                 return img_str, width, height, original_width, original_height, None

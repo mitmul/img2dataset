@@ -147,7 +147,9 @@ class WebDatasetSampleWriter:
             with fs.open(parquet_upload_path, "wb") as out_f:
                 with open(self.tmp_parquet_path, "rb") as in_f:
                     out_f.write(in_f.read())
-            print(f"\nFinished uploading {self.tmp_parquet_path} to {parquet_upload_path}")
+            print(
+                f"\nFinished uploading {self.tmp_parquet_path} to {parquet_upload_path}"
+            )
 
         self.tarwriter.close()
         with pfio.v2.from_url(self.upload_path) as fs:
