@@ -4,6 +4,7 @@ import hashlib
 import io
 import json
 import math
+import sys
 import time
 import traceback
 import urllib.request
@@ -282,6 +283,7 @@ class Downloader:
                         )
                         semaphore.release()
                         bar.update(1)
+                        sys.stdout.flush()
                         continue
 
                     if hash_indice is not None:
@@ -306,6 +308,8 @@ class Downloader:
                             img_stream.close()
                             del img_stream
                             semaphore.release()
+                            bar.update(1)
+                            sys.stdout.flush()
                             continue
 
                     img_stream.seek(0)
@@ -338,11 +342,13 @@ class Downloader:
                         del img_stream
                         semaphore.release()
                         bar.update(1)
+                        sys.stdout.flush()
                         continue
                     successes += 1
                     status = "success"
                     status_dict.increment(status)
                     bar.update(1)
+                    sys.stdout.flush()
 
                     if self.extract_exif:
                         try:
