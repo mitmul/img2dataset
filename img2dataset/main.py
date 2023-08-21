@@ -162,6 +162,7 @@ def download(
             done_shards = set()
         else:
             raise ValueError(f"Unknown incremental mode {incremental_mode}")
+    print(f"Done shards: {done_shards}")
 
     logger_process.done_shards = done_shards
     logger_process.start()
