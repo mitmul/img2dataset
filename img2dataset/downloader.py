@@ -12,6 +12,7 @@ import hashlib
 import pyarrow as pa
 import traceback
 
+import tqdm
 import fsspec
 from .logger import CappedCounter
 from .logger import write_stats
@@ -42,7 +43,6 @@ def download_image(row, timeout, user_agent_token, disallowed_header_directives)
     if user_agent_token:
         user_agent_string += f" (compatible; {user_agent_token}; +https://github.com/rom1504/img2dataset)"
     try:
-        print(f"Downloading {url}...")
         request = urllib.request.Request(url, data=None, headers={"User-Agent": user_agent_string})
         with urllib.request.urlopen(request, timeout=timeout) as r:
             if disallowed_header_directives and is_disallowed(
@@ -205,6 +205,7 @@ class Downloader:
             endpoint_url=self.endpoint_url,
         )
         oom_sample_per_shard = math.ceil(math.log10(self.number_sample_per_shard))
+        bar = tqdm.tqdm(total=self.number_sample_per_shard)
         with ThreadPool(self.thread_count) as thread_pool:
             for key, img_stream, error_message in thread_pool.imap_unordered(
                 lambda x: download_image_with_retry(
@@ -252,6 +253,7 @@ class Downloader:
                             meta,
                         )
                         semaphore.release()
+                        bar.update(1)
                         continue
 
                     if hash_indice is not None:
@@ -299,10 +301,12 @@ class Downloader:
                         img_stream.close()
                         del img_stream
                         semaphore.release()
+                        bar.update(1)
                         continue
                     successes += 1
                     status = "success"
                     status_dict.increment(status)
+                    bar.update(1)
 
                     if self.extract_exif:
                         try:
@@ -330,7 +334,6 @@ class Downloader:
                     img_stream.close()
                     del img_stream
 
-                    print(str_key)
                     sample_writer.write(
                         img,
                         str_key,

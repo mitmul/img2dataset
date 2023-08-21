@@ -119,7 +119,7 @@ class SpeedLogger(Logger):
         print(
             " - ".join(
                 [
-                    f"{self.prefix:<7}",
+                    f"\n{self.prefix:<7}",
                     f"success: {success_ratio:.3f}",
                     f"failed to download: {failed_to_download_ratio:.3f}",
                     f"failed to resize: {failed_to_resize_ratio:.3f}",
