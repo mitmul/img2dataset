@@ -148,7 +148,7 @@ class WebDatasetSampleWriter:
             parquet_upload_path = self.shard_name + ".parquet"
             print(f"Uploading {self.tmp_parquet_path} to {parquet_upload_path}...")
             with fs.open(parquet_upload_path, "wb") as out_f:
-                with open(self.tmp_parquet_path) as in_f:
+                with open(self.tmp_parquet_path, "wb") as in_f:
                     out_f.write(in_f.read())
 
     def close(self):
