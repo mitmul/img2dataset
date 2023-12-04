@@ -58,21 +58,26 @@ class Reader:
         self.tmp_path = tmp_path
 
         if endpoint_url is not None:
-            with pfio.v2.from_url(url_list, endpoint_url=endpoint_url) as fs:
-                if not fs.isdir(""):
-                    self.input_files = [url_list]
-                else:
-                    self.input_files = sorted(
-                        [
-                            fn
-                            for fn in fs.list(url_list, recursive=True)
-                            if fn.endswith(input_format)
-                        ]
-                    )
-                    if len(self.input_files) == 0:
-                        raise Exception(
-                            f"No file found at path {url_list} with extension {input_format}"
+            if os.path.exists(url_list) and not os.path.isdir(url_list):
+                self.input_files = [url_list]
+            else:
+                with pfio.v2.from_url(url_list, endpoint_url=endpoint_url) as fs:
+                    if not fs.isdir(""):
+                        print(f"Reading {url_list}: not a directory")
+                        self.input_files = [url_list]
+                    else:
+                        print(f"Reading {url_list}: is a directory")
+                        self.input_files = sorted(
+                            [
+                                fn
+                                for fn in fs.list(url_list, recursive=True)
+                                if fn.endswith(input_format)
+                            ]
                         )
+                        if len(self.input_files) == 0:
+                            raise Exception(
+                                f"No file found at path {url_list} with extension {input_format}"
+                            )
         else:
             if not os.path.isdir(url_list):
                 self.input_files = [url_list]
